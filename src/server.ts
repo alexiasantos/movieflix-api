@@ -40,6 +40,72 @@ app.post("/movies", async(req, res) => {
     }
 })
 
+app.put("/movies/:id", async(req, res)=>{
+    const  id  = Number(req.params.id);
+    const data = {...req.body};
+    data.release_date = data.release_date ? new Date(data.release_date) : undefined;
+
+    try{
+
+        const movieExists = await prisma.movie.findUnique({where: {id}});
+        if(!movieExists){
+            return  res.status(404).send({ error: "Movie not found." });
+        }
+        const movie  = await prisma.movie.update({
+            where: {id},
+            data: {
+                ...data
+            },
+        })
+
+        res.json(movie);
+
+    }catch(error){
+        res.status(500).send({ error: "An error occurred while updating the movie." });
+    }
+})
+
+app.delete("/movies/:id", async(req, res)=>{
+    const  id  = Number(req.params.id);
+    
+    try{
+        const movieExists = await prisma.movie.findUnique({where: {id}});
+        if(!movieExists){
+            return  res.status(404).send({ error: "Movie not found." });
+        }
+        const movie = await prisma.movie.delete({
+            where:{id}
+        })
+        res.json({ message: "Movie deleted successfully."});
+
+    }catch(error){
+        res.status(500).send({ error: "An error occurred while deleting the movie." });
+    }
+})
+
+app.get("/movies/:genreName", async(req, res) => {
+    const genreName = req.params.genreName;
+    try {
+        const movies = await prisma.movie.findMany({
+            where: {
+                genres: {
+                    name: {
+                        equals: genreName,
+                        mode: 'insensitive'
+                    }
+                }
+            },
+            include: {
+                genres: true,
+                languages: true
+            }
+        });
+        res.json(movies);
+    } catch (error) {
+        res.status(500).send({ error: "An error occurred while retrieving movies by genre." });
+    }
+})
+
 app.listen( port, () =>{
     console.log(`Server is running at http://localhost:${port}`);
 })
