@@ -1,0 +1,22 @@
+import express from "express"
+import { PrismaClient } from '../src/generated/prisma/index.js';
+
+const port = 3000;
+const app = express();
+const prisma =  new PrismaClient();
+app.get("/movies", async (_, res) => {
+    const movies = await prisma.movie.findMany({
+        orderBy: {
+           title: 'asc'
+        },
+        include: {
+            genres: true,
+            languages: true
+        }
+    });
+    res.json(movies);
+})
+
+app.listen( port, () =>{
+    console.log(`Server is running at http://localhost:${port}`);
+})
